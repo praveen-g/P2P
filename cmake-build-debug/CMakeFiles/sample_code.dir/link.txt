@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/sample_code.dir/main.cc.o CMakeFiles/sample_code.dir/moc_main.cpp.o  -o sample_code 

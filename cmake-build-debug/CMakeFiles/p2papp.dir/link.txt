@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/p2papp.dir/main.cc.o CMakeFiles/p2papp.dir/moc_main.cpp.o  -o p2papp 

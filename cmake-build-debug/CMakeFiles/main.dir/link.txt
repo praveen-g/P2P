@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/main.dir/main.cc.o CMakeFiles/main.dir/moc_main.cpp.o  -o main 
