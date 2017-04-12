@@ -4,7 +4,6 @@
 #include <QDialog>
 #include <QTextEdit>
 #include <QLineEdit>
-#include <QUdpSocket>
 
 class ChatDialog : public QDialog
 {
@@ -23,23 +22,3 @@ private:
 	QTextEdit *textview;
 	QLineEdit *textline;
 };
-
-class NetSocket : public QUdpSocket
-{
-	Q_OBJECT
-
-public:
-	NetSocket();
-
-	// Bind this socket to a P2Papp-specific default port.
-	bool bind();
-
-public slots:
-	int serialize(QString data);
-
-
-private:
-	int myPortMin, myPortMax;
-};
-
-#endif // P2PAPP_MAIN_HH
