@@ -1,5 +1,6 @@
 # Other files and folders
 .idea/
+moc*
 
 # Executables
 *.o

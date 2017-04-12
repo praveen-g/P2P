@@ -1,5 +1,4 @@
 #include <QVBoxLayout>
-#include <QApplication>
 #include <QDebug>
 
 #include "chat_dialog.hh"
@@ -47,4 +46,9 @@ void ChatDialog::gotReturnPressed()
 
 	// Clear the textline to get ready for the next input message.
 	textline->clear();
+}
+
+void ChatDialog::displayMessage(QString message) {
+	qDebug() << "getting data: " << message;
+	textview->append(message);
 }

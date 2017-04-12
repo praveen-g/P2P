@@ -1,36 +1,7 @@
-#include <QApplication>
 #include <QDebug>
 
 #include <unistd.h>
 #include "net_socket.hh"
-
-int NetSocket::serialize(QString data){
-
-	qDebug()<<"Entering Serialize";
-
-	//Serialization
-    QMap<QString,QVariant> dataMap;
-    dataMap.insert("Text", data);
-    QByteArray dataArray;
-    QDataStream * opStream = new QDataStream(&dataArray, QIODevice::WriteOnly);
-    (*opStream) << dataMap;
-
-    int sentData = 0;
-    for(int port = myPortMin; port<myPortMax;port++){
-    	int currentData=0;
-    	if((currentData = writeDatagram(dataArray,QHostAddress::LocalHost,port))>0){
-    		qDebug()<<"Data sent to port"<<port;
-    		sentData+=currentData;
-    	}
-    }
-	
-	if (sentData == 0) {
-		qDebug() << "Error in Sending Data";
-	} else {
-		qDebug() << sentData << " Bytes Sent Successfuly";
-	}
-	return sentData;
-}
 
 NetSocket::NetSocket()
 {
@@ -43,10 +14,40 @@ NetSocket::NetSocket()
 	// We use the range from 32768 to 49151 for this purpose.
 	myPortMin = 32768 + (getuid() % 4096)*4;
 	myPortMax = myPortMin + 3;
+	connect(this, SIGNAL(readyRead()), this, SLOT(handleReadyRead()), Qt::DirectConnection);
+
 }
 
-bool NetSocket::bind()
-{
+int NetSocket::serialize(QString data){
+
+	qDebug()<<"Entering Serialize";
+
+	//Serialization
+	QMap<QString,QVariant> dataMap;
+	dataMap.insert("Text", data);
+	QByteArray dataArray;
+	QDataStream * opStream = new QDataStream(&dataArray, QIODevice::WriteOnly);
+	(*opStream) << dataMap;
+
+	int sentData = 0;
+	for(int port = myPortMin; port<myPortMax;port++){
+		int currentData=0;
+		if((currentData = writeDatagram(dataArray,QHostAddress::LocalHost,port))>0){
+			qDebug()<<"Data sent to port"<<port;
+			sentData+=currentData;
+		}
+	}
+	
+	if (sentData == 0) {
+		qDebug() << "Error in Sending Data";
+	} else {
+		qDebug() << sentData << " Bytes Sent Successfuly";
+	}
+	return sentData;
+}
+
+// private
+bool NetSocket::bind() {
 	// Try to bind to each of the range myPortMin..myPortMax in turn.
 	for (int p = myPortMin; p <= myPortMax; p++) {
 		if (QUdpSocket::bind(p)) {
@@ -56,6 +57,23 @@ bool NetSocket::bind()
 	}
 
 	qDebug() << "Oops, no ports in my default range " << myPortMin
-		<< "-" << myPortMax << " available";
+		   << "-" << myPortMax << " available";
 	return false;
+}
+
+void NetSocket::handleReadyRead() {
+	qDebug() << "data ready for receiving";
+	while (hasPendingDatagrams()) {
+		QByteArray datagram;
+		datagram.resize(pendingDatagramSize());
+		QHostAddress sender;
+		quint16 senderPort;
+		readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+		pendingDatagram += datagram;
+  	}
+	qDebug() << "data buffed: " << pendingDatagram.data();
+	qDebug() << "sending signal";
+
+	//send signal for displaying message
+    emit sendForDisplay(pendingDatagram);
 }
