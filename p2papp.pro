@@ -3,11 +3,17 @@
 ######################################################################
 
 TEMPLATE = app
-TARGET = 
+TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 QT += network
 
 # Input
-HEADERS += main.hh
-SOURCES += main.cc
+HEADERS += \
+  net_socket.hh \
+  chat_dialog.hh
+
+SOURCES += \
+  chat_dialog.cc \
+  net_socket.cc \
+  main.cc

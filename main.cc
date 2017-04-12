@@ -1,5 +1,4 @@
-
-#include <unistd.h>
+#include <QApplication>
 
 #include "chat_dialog.hh"
 #include "net_socket.hh"
@@ -24,4 +23,3 @@ int main(int argc, char **argv)
 	// Enter the Qt main loop; everything else is event driven
 	return app.exec();
 }
-

@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QDebug>
 
+#include <unistd.h>
 #include "net_socket.hh"
 
 int NetSocket::serialize(QString data){

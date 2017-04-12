@@ -1,5 +1,6 @@
 #ifndef P2PAPP_MAIN_HH
 #define P2PAPP_MAIN_HH
+#endif
 
 #include <QDialog>
 #include <QTextEdit>
