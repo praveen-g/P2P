@@ -22,10 +22,10 @@ signals:
 
 private:
 	int myPortMin, myPortMax;
-  QByteArray pendingDatagram;
+  	QByteArray pendingDatagram;
 
 private slots:
-  void handleReadyRead();
+  void deserialization();
 };
 
 #endif

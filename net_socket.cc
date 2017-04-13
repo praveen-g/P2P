@@ -14,7 +14,7 @@ NetSocket::NetSocket()
 	// We use the range from 32768 to 49151 for this purpose.
 	myPortMin = 32768 + (getuid() % 4096)*4;
 	myPortMax = myPortMin + 3;
-	connect(this, SIGNAL(readyRead()), this, SLOT(handleReadyRead()), Qt::DirectConnection);
+	connect(this, SIGNAL(readyRead()), this, SLOT(deserialization()), Qt::DirectConnection);
 
 }
 
@@ -61,7 +61,7 @@ bool NetSocket::bind() {
 	return false;
 }
 
-void NetSocket::handleReadyRead() {
+void NetSocket::deserialization() {
 	qDebug() << "data ready for receiving";
 	while (hasPendingDatagrams()) {
 		QByteArray datagram;
