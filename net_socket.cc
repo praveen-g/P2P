@@ -69,7 +69,15 @@ void NetSocket::handleReadyRead() {
 		QHostAddress sender;
 		quint16 senderPort;
 		readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-		pendingDatagram += datagram;
+		
+		QMap<QString, QVariant> dataMap;
+		QDataStream dataStream(&datagram, QIODevice::ReadOnly);
+		dataStream >> dataMap;
+
+		QString message = dataMap.value("Text").toString();
+
+		
+		pendingDatagram += message;
   	}
 	qDebug() << "data buffed: " << pendingDatagram.data();
 	qDebug() << "sending signal";
