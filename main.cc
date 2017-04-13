@@ -17,6 +17,9 @@ int main(int argc, char **argv)
 	if (!sock.bind())
 		exit(1);
 
+	dialog.peerID = &sock.peerID;
+	dialog.msgID = &sock.msgID;
+
 	//signal-slot used to send input data to neighbours
 	QObject::connect(&dialog, SIGNAL(sendData(QString)),&sock, SLOT(serialize(QString)));
 	

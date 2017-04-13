@@ -10,6 +10,8 @@ class NetSocket : public QUdpSocket
 
 public:
 	NetSocket();
+	QString peerID;
+	quint32 msgID;
 
   // Bind this socket to a P2Papp-specific default port.
   bool bind();

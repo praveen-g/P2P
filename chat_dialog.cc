@@ -37,12 +37,12 @@ ChatDialog::ChatDialog()
 
 void ChatDialog::gotReturnPressed()
 {
-	// Initially, just echo the string locally.
-	// Insert some networking code here...
-	qDebug() << "FIX: send message to other peers: " << textline->text();
-	textview->append(textline->text());
+	qDebug() << "Peer ID: " << *peerID << " Seq Num: "<< QString::number(*msgID)<<" Text:" << textline->text();
+	QString text = *peerID+"-"+QString::number(*msgID)+"-"+textline->text();
 
-	emit sendData(textline->text());
+	textview->append(text);
+
+	emit sendData(text);
 
 	// Clear the textline to get ready for the next input message.
 	textline->clear();

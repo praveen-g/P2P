@@ -12,6 +12,8 @@ class ChatDialog : public QDialog
 
 public:
 	ChatDialog();
+	QString *peerID;
+	quint32 *msgID;
 
 public slots:
 	void gotReturnPressed();

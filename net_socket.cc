@@ -14,6 +14,10 @@ NetSocket::NetSocket()
 	// We use the range from 32768 to 49151 for this purpose.
 	myPortMin = 32768 + (getuid() % 4096)*4;
 	myPortMax = myPortMin + 3;
+
+	qsrand(time(0));
+	peerID = QString::number(qrand());
+	msgID = 1;
 	connect(this, SIGNAL(readyRead()), this, SLOT(deserialization()), Qt::DirectConnection);
 
 }
@@ -24,7 +28,11 @@ int NetSocket::serialize(QString data){
 
 	//Serialization
 	QMap<QString,QVariant> dataMap;
-	dataMap.insert("Text", data);
+	dataMap.insert("ChatText", QVariant(data));
+	dataMap.insert("PeerID", QVariant(peerID));
+	dataMap.insert("MessageID", QVariant(msgID));
+	msgID++;
+
 	QByteArray dataArray;
 	QDataStream * opStream = new QDataStream(&dataArray, QIODevice::WriteOnly);
 	(*opStream) << dataMap;
@@ -74,7 +82,7 @@ void NetSocket::deserialization() {
 		QDataStream dataStream(&datagram, QIODevice::ReadOnly);
 		dataStream >> dataMap;
 
-		QString message = dataMap.value("Text").toString();
+		QString message = dataMap.value("ChatText").toString();
 
 		
 		pendingDatagram += message;
