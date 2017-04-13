@@ -36,12 +36,12 @@ ChatDialog::ChatDialog()
 }
 
 void ChatDialog::gotReturnPressed()
-{
+{	
+
 	qDebug() << "Origin: " << *peerID << " Seq Num: "<< QString::number(*msgID)<<" Text:" << textline->text();
 	QString text = *peerID+"-"+QString::number(*msgID)+"-"+textline->text();
 
-	textview->append(text);
-
+	//textview->append(text);
 	emit sendData(text);
 
 	// Clear the textline to get ready for the next input message.

@@ -18,7 +18,7 @@ NetSocket::NetSocket()
 	qsrand(time(0));
 	peerID = QString::number(qrand());QString::number(qrand());
 	msgID = 1;
-	connect(this, SIGNAL(readyRead()), this, SLOT(deserialization()), Qt::DirectConnection);
+	connect(this, SIGNAL(readyRead()), this, SLOT(receiveInput()), Qt::DirectConnection);
 
 }
 
@@ -87,7 +87,49 @@ bool NetSocket::bind() {
 	return false;
 }
 
-int NetSocket::deserialization() {
+int NetSocket::sendAck(QHostAddress sender, quint16 senderPort){
+
+	//create want map
+	QByteArray datagram;
+
+	//send want map
+	int ackSent = writeDatagram(datagram, sender, senderPort);
+	return ackSent;
+}
+
+int NetSocket::processInput(QMap<QString, QVariant> dataMap,QHostAddress sender, quint16 senderPort){
+
+	//received status message
+	if(dataMap.contains("Want")){
+		qDebug() << "Received Status Message";
+		//handle status message
+	}
+	else{
+		QString message = dataMap.value("ChatText").toString();
+		QString seqNo = dataMap.value("SeqNo").toString();
+
+		//complying with RFC for allowed message ID
+		if(seqNo.contains(QChar('/')) || seqNo.contains(QChar(' ')) || seqNo.contains(QChar('\t')) ){
+			qDebug() <<"Incorrect Message ID";
+			return ERROR;
+		}
+		pendingDatagram += message;
+		qDebug() << "data buffed: " << pendingDatagram.data();
+		qDebug() << "sending signal";
+
+		//send signal for displaying message
+    	emit sendForDisplay(pendingDatagram);
+	}
+
+	//send acknowledgment
+	int ackStatus;
+	if ((ackStatus = sendAck(sender,senderPort))<0){
+		qDebug() << "Error in Sending Acknowledgment";
+	}
+	return ackStatus;
+}
+
+int NetSocket::receiveInput() {
 
 	qDebug() << "data ready for receiving";
 	int totalDataRead=0;
@@ -105,17 +147,14 @@ int NetSocket::deserialization() {
 			QDataStream inStream(&datagram, QIODevice::ReadOnly);
 			inStream >> dataMap;
 
-			QString message = dataMap.value("ChatText").toString();
-
-			pendingDatagram += message;
+			if(processInput(dataMap, sender, senderPort) <0){
+				return ERROR;
+			}
+			
 			totalDataRead+=dataRead;
 		}
   	}
-	qDebug() << "data buffed: " << pendingDatagram.data();
-	qDebug() << "sending signal";
 
-	//send signal for displaying message
-    emit sendForDisplay(pendingDatagram);
 
     if (totalDataRead == 0) {
 		qDebug() << "Error in Reading Data";

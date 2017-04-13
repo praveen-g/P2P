@@ -2,6 +2,7 @@
 #define P2PAPP_NET_SOCKET_HH
 #define NEIGHBOURS 2
 #define NOT_DEFINED -1
+#define ERROR -1
 
 #include <QUdpSocket>
 #include <QApplication>
@@ -17,6 +18,8 @@ public:
 
   // Bind this socket to a P2Papp-specific default port.
   bool bind();
+  int processInput(QMap<QString, QVariant> dataMap,QHostAddress sender, quint16 senderPort);
+  int sendAck(QHostAddress sender, quint16 senderPort);
   
 public slots:
 	int serialize(QString data);
@@ -30,7 +33,7 @@ private:
   	int neighbours[NEIGHBOURS];
 
 private slots:
-  int deserialization();
+  int receiveInput();
 };
 
 #endif
