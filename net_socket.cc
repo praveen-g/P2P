@@ -16,7 +16,7 @@ NetSocket::NetSocket()
 	myPortMax = myPortMin + 3;
 
 	qsrand(time(0));
-	peerID = QString::number(port)+"@"+QString::number(qrand());QString::number(qrand());
+	peerID = QString::number(qrand());QString::number(qrand());
 	msgID = 1;
 	connect(this, SIGNAL(readyRead()), this, SLOT(deserialization()), Qt::DirectConnection);
 
@@ -59,7 +59,25 @@ bool NetSocket::bind() {
 	// Try to bind to each of the range myPortMin..myPortMax in turn.
 	for (int p = myPortMin; p <= myPortMax; p++) {
 		if (QUdpSocket::bind(p)) {
+			if(p==myPortMin){
+				neighbours[0]=NOT_DEFINED;
+				neighbours[1]=p+1;
+			}
+			else if(p==myPortMax){
+				neighbours[0]=p-1;
+				neighbours[1]=NOT_DEFINED;
+			}
+			else{
+				neighbours[0]=p-1;
+				neighbours[1]=p+1;
+			}
 			qDebug() << "bound to UDP port " << p;
+			qDebug() << "\n Neighbours: ";
+			for(int i=0;i<NEIGHBOURS; i++){
+				if (neighbours[i] != NOT_DEFINED ){
+					qDebug() << neighbours[i] << " ";
+				}
+			}
 			return true;
 		}
 	}
@@ -85,7 +103,7 @@ int NetSocket::deserialization() {
 			qDebug()<<"Error Reading Data from port"<<senderPort;
 			QMap<QString, QVariant> dataMap;
 			QDataStream inStream(&datagram, QIODevice::ReadOnly);
-			dataStream >> dataMap;
+			inStream >> dataMap;
 
 			QString message = dataMap.value("ChatText").toString();
 
@@ -102,7 +120,7 @@ int NetSocket::deserialization() {
     if (totalDataRead == 0) {
 		qDebug() << "Error in Reading Data";
 	} else {
-		qDebug() << sentData << " Bytes Read Successfuly";
+		qDebug() << totalDataRead << " Bytes Read Successfuly";
 	}
 	return totalDataRead;
 }

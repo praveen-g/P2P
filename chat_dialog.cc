@@ -37,7 +37,7 @@ ChatDialog::ChatDialog()
 
 void ChatDialog::gotReturnPressed()
 {
-	qDebug() << "Peer ID: " << *peerID << " Seq Num: "<< QString::number(*msgID)<<" Text:" << textline->text();
+	qDebug() << "Origin: " << *peerID << " Seq Num: "<< QString::number(*msgID)<<" Text:" << textline->text();
 	QString text = *peerID+"-"+QString::number(*msgID)+"-"+textline->text();
 
 	textview->append(text);

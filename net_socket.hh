@@ -1,5 +1,7 @@
 #ifndef P2PAPP_NET_SOCKET_HH
 #define P2PAPP_NET_SOCKET_HH
+#define NEIGHBOURS 2
+#define NOT_DEFINED -1
 
 #include <QUdpSocket>
 #include <QApplication>
@@ -25,6 +27,7 @@ signals:
 private:
 	int myPortMin, myPortMax;
   	QByteArray pendingDatagram;
+  	int neighbours[NEIGHBOURS];
 
 private slots:
   int deserialization();
