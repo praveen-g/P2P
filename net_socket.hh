@@ -27,7 +27,7 @@ private:
   	QByteArray pendingDatagram;
 
 private slots:
-  void deserialization();
+  int deserialization();
 };
 
 #endif

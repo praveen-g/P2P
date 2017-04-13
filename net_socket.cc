@@ -16,7 +16,7 @@ NetSocket::NetSocket()
 	myPortMax = myPortMin + 3;
 
 	qsrand(time(0));
-	peerID = QString::number(qrand());
+	peerID = QString::number(port)+"@"+QString::number(qrand());QString::number(qrand());
 	msgID = 1;
 	connect(this, SIGNAL(readyRead()), this, SLOT(deserialization()), Qt::DirectConnection);
 
@@ -29,8 +29,8 @@ int NetSocket::serialize(QString data){
 	//Serialization
 	QMap<QString,QVariant> dataMap;
 	dataMap.insert("ChatText", QVariant(data));
-	dataMap.insert("PeerID", QVariant(peerID));
-	dataMap.insert("MessageID", QVariant(msgID));
+	dataMap.insert("Origin", QVariant(peerID));
+	dataMap.insert("SeqNo", QVariant(msgID));
 	msgID++;
 
 	QByteArray dataArray;
@@ -69,27 +69,40 @@ bool NetSocket::bind() {
 	return false;
 }
 
-void NetSocket::deserialization() {
+int NetSocket::deserialization() {
+
 	qDebug() << "data ready for receiving";
+	int totalDataRead=0;
+
 	while (hasPendingDatagrams()) {
 		QByteArray datagram;
 		datagram.resize(pendingDatagramSize());
 		QHostAddress sender;
 		quint16 senderPort;
-		readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-		
-		QMap<QString, QVariant> dataMap;
-		QDataStream dataStream(&datagram, QIODevice::ReadOnly);
-		dataStream >> dataMap;
 
-		QString message = dataMap.value("ChatText").toString();
+		int dataRead=0;
+		if((dataRead = readDatagram(datagram.data(), datagram.size(), &sender, &senderPort))>0){
+			qDebug()<<"Error Reading Data from port"<<senderPort;
+			QMap<QString, QVariant> dataMap;
+			QDataStream inStream(&datagram, QIODevice::ReadOnly);
+			dataStream >> dataMap;
 
-		
-		pendingDatagram += message;
+			QString message = dataMap.value("ChatText").toString();
+
+			pendingDatagram += message;
+			totalDataRead+=dataRead;
+		}
   	}
 	qDebug() << "data buffed: " << pendingDatagram.data();
 	qDebug() << "sending signal";
 
 	//send signal for displaying message
     emit sendForDisplay(pendingDatagram);
+
+    if (totalDataRead == 0) {
+		qDebug() << "Error in Reading Data";
+	} else {
+		qDebug() << sentData << " Bytes Read Successfuly";
+	}
+	return totalDataRead;
 }
