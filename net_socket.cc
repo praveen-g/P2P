@@ -18,6 +18,10 @@ NetSocket::NetSocket()
 	qsrand(time(0));
 	peerID = QString::number(qrand());QString::number(qrand());
 	msgID = 1;
+
+	//initialize clock status with peerID and exepected messageID
+	clockState.insert(peerID,msgID);
+
 	connect(this, SIGNAL(readyRead()), this, SLOT(receiveInput()), Qt::DirectConnection);
 
 }
@@ -31,18 +35,27 @@ int NetSocket::serialize(QString data){
 	dataMap.insert("ChatText", QVariant(data));
 	dataMap.insert("Origin", QVariant(peerID));
 	dataMap.insert("SeqNo", QVariant(msgID));
-	msgID++;
+	
 
 	QByteArray dataArray;
 	QDataStream * opStream = new QDataStream(&dataArray, QIODevice::WriteOnly);
 	(*opStream) << dataMap;
 
-	int sentData = 0;
-	for(int port = myPortMin; port<myPortMax;port++){
-		int currentData=0;
-		if((currentData = writeDatagram(dataArray,QHostAddress::LocalHost,port))>0){
-			qDebug()<<"Data sent to port"<<port;
-			sentData+=currentData;
+	int sentData = NOT_DEFINED;
+
+	//send next sequential message
+	if(clockState.value(peerID)==msgID){
+		msgID++;
+		//update clockstate
+		clockState.insert(peerID,msgID);
+		qDebug() << "Updated clock status";
+
+		for(int port = myPortMin; port<myPortMax;port++){
+			int currentData=0;
+			if((currentData = writeDatagram(dataArray,QHostAddress::LocalHost,port))>0){
+				qDebug()<<"Data sent to port"<<port;
+				sentData+=currentData;
+			}
 		}
 	}
 	
@@ -51,6 +64,7 @@ int NetSocket::serialize(QString data){
 	} else {
 		qDebug() << sentData << " Bytes Sent Successfuly";
 	}
+
 	return sentData;
 }
 
@@ -60,24 +74,16 @@ bool NetSocket::bind() {
 	for (int p = myPortMin; p <= myPortMax; p++) {
 		if (QUdpSocket::bind(p)) {
 			if(p==myPortMin){
-				neighbours[0]=NOT_DEFINED;
-				neighbours[1]=p+1;
+				neighbours.push_back(p+1);
 			}
 			else if(p==myPortMax){
-				neighbours[0]=p-1;
-				neighbours[1]=NOT_DEFINED;
+				neighbours.push_back(p-1);
 			}
 			else{
-				neighbours[0]=p-1;
-				neighbours[1]=p+1;
+				neighbours.push_back(p-1);
+				neighbours.push_back(p+1);
 			}
 			qDebug() << "bound to UDP port " << p;
-			qDebug() << "\n Neighbours: ";
-			for(int i=0;i<NEIGHBOURS; i++){
-				if (neighbours[i] != NOT_DEFINED ){
-					qDebug() << neighbours[i] << " ";
-				}
-			}
 			return true;
 		}
 	}
@@ -99,40 +105,62 @@ int NetSocket::sendAck(QHostAddress sender, quint16 senderPort){
 
 int NetSocket::processInput(QMap<QString, QVariant> dataMap,QHostAddress sender, quint16 senderPort){
 
+	int ackStatus;
+
 	//received status message
 	if(dataMap.contains("Want")){
 		qDebug() << "Received Status Message";
 		//handle status message
 	}
 	else{
+		qDebug() << "Recevied rumour Message";
 		QString message = dataMap.value("ChatText").toString();
 		QString seqNo = dataMap.value("SeqNo").toString();
+		QString peer = dataMap.value("Origin").toString();
 
 		//complying with RFC for allowed message ID
 		if(seqNo.contains(QChar('/')) || seqNo.contains(QChar(' ')) || seqNo.contains(QChar('\t')) ){
 			qDebug() <<"Incorrect Message ID";
 			return ERROR;
 		}
-		pendingDatagram += message;
-		qDebug() << "data buffed: " << pendingDatagram.data();
-		qDebug() << "sending signal";
 
-		//send signal for displaying message
-    	emit sendForDisplay(pendingDatagram);
+		
+		if(!clockState.contains(peer)){
+			//add peer to system state
+			clockState.insert(peer,1);
+		}else{
+			QString expctdSeqNo = clockState.value(peer).toString();
+			//check if message arrived in sequence
+			if(seqNo.compare(expctdSeqNo) == 0){
+				
+				//update clock status
+				clockState.insert(peer, seqNo+1);
+				
+				qDebug() << "Correct Message Received";
+
+				//send signal for displaying message
+    			emit sendForDisplay(message);
+
+    			//send acknowledgment
+				
+				if ((ackStatus = sendAck(sender,senderPort))<0){
+					qDebug() << "Error in Sending Acknowledgment";
+				}
+
+				//continue rumouring
+				//Send to random neighbour
+			}
+		}
+		
 	}
 
-	//send acknowledgment
-	int ackStatus;
-	if ((ackStatus = sendAck(sender,senderPort))<0){
-		qDebug() << "Error in Sending Acknowledgment";
-	}
 	return ackStatus;
 }
 
 int NetSocket::receiveInput() {
 
 	qDebug() << "data ready for receiving";
-	int totalDataRead=0;
+	int totalDataRead = NOT_DEFINED;
 
 	while (hasPendingDatagrams()) {
 		QByteArray datagram;
@@ -142,7 +170,7 @@ int NetSocket::receiveInput() {
 
 		int dataRead=0;
 		if((dataRead = readDatagram(datagram.data(), datagram.size(), &sender, &senderPort))>0){
-			qDebug()<<"Error Reading Data from port"<<senderPort;
+			
 			QMap<QString, QVariant> dataMap;
 			QDataStream inStream(&datagram, QIODevice::ReadOnly);
 			inStream >> dataMap;

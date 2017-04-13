@@ -1,6 +1,5 @@
 #ifndef P2PAPP_NET_SOCKET_HH
 #define P2PAPP_NET_SOCKET_HH
-#define NEIGHBOURS 2
 #define NOT_DEFINED -1
 #define ERROR -1
 
@@ -29,8 +28,8 @@ signals:
 
 private:
 	int myPortMin, myPortMax;
-  	QByteArray pendingDatagram;
-  	int neighbours[NEIGHBOURS];
+  QVector<QVariant> neighbours;
+  QMap<QString, QVariant> clockState;
 
 private slots:
   int receiveInput();
